@@ -12,7 +12,7 @@ addpath('../message_types'); state = msg_state();
 
 % initialize the mav viewer
 %addpath('../chap2'); mav_view = mav_viewer();
-addpath('../chap2'); mav_view = spacecraft_viewer();
+addpath('../chap2'); mav_view = mav_viewer();
 
 % initialize the video writer
 VIDEO = 0;  % 1 means write video, 0 means don't write video
