@@ -41,9 +41,9 @@ while sim_time < SIM.end_time
     %-------update viewer-------------
     mav_view.update(mav.true_state);  % plot body of MAV
     data_view.update(mav.true_state,... % true states
-                     mav.true_state,... % estimated states
-                     mav.true_state,... % commmanded states
-                     SIM.ts_simulation); 
+                    mav.true_state,... % estimated states
+                    mav.true_state,... % commmanded states
+                    SIM.ts_simulation); 
     if VIDEO, video.update(sim_time);  end
 
     %-------increment time-------------

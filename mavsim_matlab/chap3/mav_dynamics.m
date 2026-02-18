@@ -5,7 +5,7 @@
 %     - Update history:  
 %         12/19/2018 - RWB
 classdef mav_dynamics < handle
-   %--------------------------------
+    %--------------------------------
     properties
         ts_simulation
         state
@@ -58,27 +58,39 @@ classdef mav_dynamics < handle
             ell   = forces_moments(4);
             m     = forces_moments(5);
             n     = forces_moments(6);
-        
+            
+            % quanternion rotation matrix
+            rotation_quant  = [
+                    e0^2+ex^2-ey^2-ez^2, 2*(ex*ey-e0*ez), 2*(ex*ez+e0*ey);
+                    2*(ex*ey+e0*ez), e0^2-ex^2+ey^2-ez^2, 2*(ey*ez-e0*ex);
+                    2*(ex*ez-e0*ey), 2*(ey*ez+e0*ex), e0^2-ex^2-ey^2+ez^2;
+                ];
+
             % position kinematics
-            pn_dot = 
-            pe_dot = 
-            pd_dot = 
+            [pn_dot, pe_dot, pd_dot] = rotation_quant *  [u; v; w;];
+            fprintf("pn_dot: %d pe_dot: %d pd_dot: %d\n", pn_dot, pe_dot, pd_dot);
 
             % position dynamics
-            u_dot = 
-            v_dot = 
-            w_dot = 
-            
+            [u_dot, v_dot, w_dot] = [rv-qw; pw-ru; qu-pv;] + m^(-1)*[fx; fy; fz]
+            fprintf("u_dot: %d v_dot: %d w_dot: %d\n", u_dot, v_dot, w_dot);
             % rotational kinematics
-            e0_dot = 
-            e1_dot = 
-            e2_dot = 
-            e3_dot = 
+            temp = [
+                    0, -p, -q, -r;
+                    p, 0, r, -q;
+                    q, -r, 0, p;
+                    r, q, -p, 0
+                    ]
+            [e0_dot, e1_dot, e2_dot, e3_dot] = temp * [e0; ex; ey; ez];
             
             % rotational dynamics
-            p_dot = 
-            q_dot = 
-            r_dot = 
+            fprintf('Js\n')
+            MAV.Jx
+            MAV.Jy
+            MAV.Jz
+            MAV.Jxz
+            % p_dot = 
+            % q_dot = 
+            % r_dot = 
         
             % collect all the derivaties of the states
             xdot = [pn_dot; pe_dot; pd_dot; u_dot; v_dot; w_dot;...
@@ -86,7 +98,7 @@ classdef mav_dynamics < handle
         end
         %----------------------------
         function self=update_true_state(self)
-             [phi, theta, psi] = Quaternion2Euler(self.state(7:10));
+            [phi, theta, psi] = Quaternion2Euler(self.state(7:10));
             self.true_state.pn = self.state(1);  % pn
             self.true_state.pe = self.state(2);  % pd
             self.true_state.h = -self.state(3);  % h
