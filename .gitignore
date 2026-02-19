@@ -132,3 +132,4 @@ dmypy.json
 # History Files
 .history/
 text.txt
+.vscode/settings.json
