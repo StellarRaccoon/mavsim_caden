@@ -60,18 +60,19 @@ classdef mav_dynamics < handle
             n     = forces_moments(6);
             
             % quanternion rotation matrix
-            rotation_quant  = [
-                    e0^2+ex^2-ey^2-ez^2, 2*(ex*ey-e0*ez), 2*(ex*ez+e0*ey);
-                    2*(ex*ey+e0*ez), e0^2-ex^2+ey^2-ez^2, 2*(ey*ez-e0*ex);
-                    2*(ex*ez-e0*ey), 2*(ey*ez+e0*ex), e0^2-ex^2-ey^2+ez^2;
-                ];
 
             % position kinematics
-            [pn_dot, pe_dot, pd_dot] = rotation_quant *  [u; v; w;];
+            pos_dot = Quaternion2Rotation([e0, e1, e2, e3]) * [u; v; w];
+            pn_dot = pos_dot(1);
+            pe_dot = pos_dot(2);
+            pd_dot = pos_dot(3);
             fprintf("pn_dot: %d pe_dot: %d pd_dot: %d\n", pn_dot, pe_dot, pd_dot);
 
             % position dynamics
-            [u_dot, v_dot, w_dot] = [rv-qw; pw-ru; qu-pv;] + m^(-1)*[fx; fy; fz]
+            vel_dot = [r*v-q*w; p*w-r*u; q*u-p*v;] + m^(-1)*[fx; fy; fz]
+            u_dot = vel_dot(1); 
+            v_dot = vel_dot(2);
+            w_dot = vel_dot(3);
             fprintf("u_dot: %d v_dot: %d w_dot: %d\n", u_dot, v_dot, w_dot);
             % rotational kinematics
             temp = [
@@ -80,17 +81,20 @@ classdef mav_dynamics < handle
                     q, -r, 0, p;
                     r, q, -p, 0
                     ]
-            [e0_dot, e1_dot, e2_dot, e3_dot] = temp * [e0; ex; ey; ez];
-            
+            e_dot = temp * [e0; e1; e2; e3];
+            e0_dot = e_dot(1);
+            e1_dot = e_dot(2);
+            e2_dot = e_dot(3);
+            e3_dot = e_dot(4);
             % rotational dynamics
             fprintf('Js\n')
             MAV.Jx
             MAV.Jy
             MAV.Jz
             MAV.Jxz
-            % p_dot = 
-            % q_dot = 
-            % r_dot = 
+            p_dot = 0;
+            q_dot = 0;
+            r_dot = 0;
         
             % collect all the derivaties of the states
             xdot = [pn_dot; pe_dot; pd_dot; u_dot; v_dot; w_dot;...

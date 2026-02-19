@@ -36,7 +36,7 @@ while sim_time < SIM.end_time
     forces_moments = [fx; fy; fz; Mx; My; Mz];
 
     %-------physical system-------------
-    mav.update(forces_moments, MAV);
+    mav.update_state(forces_moments, MAV);
     
     %-------update viewer-------------
     mav_view.update(mav.true_state);  % plot body of MAV
