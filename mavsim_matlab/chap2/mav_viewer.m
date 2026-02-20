@@ -24,7 +24,7 @@ classdef mav_viewer < handle
                 figure(1); clf;
                 self=self.drawBody(state.pn, state.pe, -state.h,...
                                     state.phi, state.theta, state.psi);
-                title('Spacecraft')
+                title('MAV')
                 xlabel('East')
                 ylabel('North')
                 zlabel('-Down')

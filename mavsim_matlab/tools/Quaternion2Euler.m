@@ -6,7 +6,7 @@ function [phi, theta, psi] = Quaternion2Euler(quaternion)
     e2 = quaternion(3);
     e3 = quaternion(4);
     
-    phi = atan2(2*(e0*ex + ey*ez),(e0^2 + ez^2 - ex^2 - ey^2));
-    theta = asin(2*(e0*ey - ex*ez));
-    psi = atan2(2*(e0*ez + ex*ey),(e0^2 + ex^2 - ey^2 - ez^2));
+    phi = atan2(2*(e0*e1 + e2*e3),(e0^2 + e3^2 - e1^2 - e2^2));
+    theta = asin(2*(e0*e2 - e1*e3));
+    psi = atan2(2*(e0*e3 + e1*e2),(e0^2 + e1^2 - e2^2 - e3^2));
 end

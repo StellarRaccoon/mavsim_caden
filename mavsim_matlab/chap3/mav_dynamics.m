@@ -66,35 +66,43 @@ classdef mav_dynamics < handle
             pn_dot = pos_dot(1);
             pe_dot = pos_dot(2);
             pd_dot = pos_dot(3);
-            fprintf("pn_dot: %d pe_dot: %d pd_dot: %d\n", pn_dot, pe_dot, pd_dot);
+            %fprintf("pn_dot: %d pe_dot: %d pd_dot: %d\n", pn_dot, pe_dot, pd_dot);
 
             % position dynamics
-            vel_dot = [r*v-q*w; p*w-r*u; q*u-p*v;] + m^(-1)*[fx; fy; fz]
+            vel_dot = [r*v-q*w; p*w-r*u; q*u-p*v;] + MAV.mass^(-1)*[fx; fy; fz];
             u_dot = vel_dot(1); 
             v_dot = vel_dot(2);
             w_dot = vel_dot(3);
-            fprintf("u_dot: %d v_dot: %d w_dot: %d\n", u_dot, v_dot, w_dot);
+            %fprintf("u_dot: %d v_dot: %d w_dot: %d\n", u_dot, v_dot, w_dot);
             % rotational kinematics
             temp = [
                     0, -p, -q, -r;
                     p, 0, r, -q;
                     q, -r, 0, p;
                     r, q, -p, 0
-                    ]
+                    ];
             e_dot = temp * [e0; e1; e2; e3];
             e0_dot = e_dot(1);
             e1_dot = e_dot(2);
             e2_dot = e_dot(3);
             e3_dot = e_dot(4);
             % rotational dynamics
-            fprintf('Js\n')
-            MAV.Jx
-            MAV.Jy
-            MAV.Jz
-            MAV.Jxz
-            p_dot = 0;
-            q_dot = 0;
-            r_dot = 0;
+            
+            Gamma1 = MAV.Gamma1;
+            Gamma2 = MAV.Gamma2;
+            Gamma3 = MAV.Gamma3;
+            Gamma4 = MAV.Gamma4;
+            Gamma5 = MAV.Gamma5;
+            Gamma6 = MAV.Gamma6;
+            Gamma7 = MAV.Gamma7;
+            Gamma8 = MAV.Gamma8;
+            Jy = MAV.Jy;
+            
+            rate_dot= [Gamma1*p*q-Gamma2*q*r; Gamma5*p*r-Gamma6*(p^2-r^2); Gamma7*p*q-Gamma1*q*r]+...
+            [Gamma3, 0, Gamma4; 0, 1/Jy, 0; Gamma4, 0, Gamma8;]* [ell; m; n];
+            p_dot = rate_dot(1);
+            q_dot = rate_dot(2);
+            r_dot = rate_dot(3);
         
             % collect all the derivaties of the states
             xdot = [pn_dot; pe_dot; pd_dot; u_dot; v_dot; w_dot;...
