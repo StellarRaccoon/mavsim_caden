@@ -29,7 +29,8 @@ classdef mav_viewer < handle
                 ylabel('North')
                 zlabel('-Down')
                 view(32,47)  % set the vieew angle for figure
-                axis([-10,10,-10,10,-10,10]);
+                axis([-30,30,0,420,70,120]);
+                axis equal;
                 hold on
                 grid on
                 self.plot_initialized = 1;
