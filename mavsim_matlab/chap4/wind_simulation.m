@@ -19,7 +19,7 @@ classdef wind_simulation < handle
     methods
         %------constructor-----------
         function self = wind_simulation(Ts)
-            self.steady_state = 
+            self.steady_state = [0; 0; 0];
             self.A = 
             self.B = 
             self.C = 
