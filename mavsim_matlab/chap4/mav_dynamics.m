@@ -5,7 +5,7 @@
 %     - Update history:  
 %         1/18/2019 - RWB
 classdef mav_dynamics < handle
-   %--------------------------------
+%--------------------------------
     properties
         ts_simulation
         state
@@ -70,7 +70,7 @@ classdef mav_dynamics < handle
         end
         %----------------------------
         function out=forces_moments(self, delta, MAV)
-    
+            
             % output total force and torque
             out = [Force'; Torque'];
         end
