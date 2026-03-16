@@ -130,25 +130,99 @@ classdef mav_dynamics < handle
         function self=update_velocity_data(self, wind)
 
             % find wind in body velocity
-            self.wind = 
+            %TODO ACCESS GUST??
+            wind_vel_body = Quaternion2Rotation(self.state(7:10))*wind + gust
+            % R*steady wind + wind gust
+            % wind velocity in body frame
+            self.wind =  Quaternion2Rotation(self.state(7:10))*wind + gust
             % find relative wind
-            % find airspeed
-            self.Va = 
+
+            % find airspeed in body frame. Va = [ur;vr;wr] ur = u-uw
+            VaBody = [...
+                        self.state(4) - self.wind(1);...
+                        self.state(5) - self.wind(2);...
+                        self.state(6) - self.wind(3)...
+                    ];
+            self.Va = sqrt(VaBody(1)^2+VaBody(2)^2+VaBody(3)^2);
             % find angle of attack
-            self.alpha = 
+            self.alpha = tan^-1(VaBody(3)/VaBody(1));
             % find side slip
-            self.beta = 
+            self.beta = sin^-1(VaBody(2)/self.Va);
         end
         %----------------------------
         % compute for control surfaces
         function out=forces_moments(self, delta, MAV)
-            % aerodynamic forces
+            [delta_e; delta_t; delta_a; delta_r] = delta;
+            %% PROPELLER FORCE AND TORQUE Algorithim 4.1
+            % Compute Vin , input voltage, using eq 4.22
+                V_in = MAV.V_max*delta_t;
+            % Compute Omega_prop, propeller speed, using the quadratic formula from eq 4.21
+                % get quadratic coifficents
+                
+                a = (MAV.rho*MAV.D_prop^5/(2*pi)^2)*MAV.C_Q0;
+                b = (MAV.rho*MAV.D_prop^4/(2*pi))*MAV.C_Q1*self.Va+(MAV.K_Q*MAV.K_V/MAV.R_motor);
+                c = MAV.rho*MAV.D_prop^3*MAV.C_Q2*self.Va^2-(MAV.K_Q*V_in/MAV.R_motor)+MAV.K_Q*MAV.i0;
+                % solve eq 4.21
+                r = roots([a, b, c]);
+                Omega_prop = r(r > 0);
+            % Compute T_prop, thrust produced by propeller, using eq 4.17
+                % find J(Omega, Va)
+                J = 2*pi*self.Va/(Omega_prop*MAV.D_prop);
+                % find CT(J)
+                C_T_J = MAV.C_T0+MAV.C_T1*J+C_T2*J^2;
+                T_prop = MAV.rho*MAV.D_prop^4/(4*pi^2)*Omega_prop^2*(MAV.C_T2*J^2+MAV.C_T1*J+MAV.C_T0);
+            % Compute Q_prop, torque produced by propeller, using eq 4.18
+                % Find C_Q(J)
+                C_Q_J = MAV.C_Q0+MAV.C_Q1*J+C_Q2*J^2;
+                % Find Q_Prop from eq 4.18
+                Q_prop = MAV.rho*MAV.D_prop^5/(4*pi^2)*Omega_prop^2*(MAV.C_Q2*J^2+MAV.C_Q1*J+MAV.C_Q0);
             
-            %aerodynamic moments
-            
-            % propeller thrust
-            
-            % rpopeller torque
+            %% AERODYNAMIC FORCES [fx; fy; fz] eq 4.24
+
+                % find coifficents eq 4.25                
+                C_X = -C_D*cos(alpha) + C_L*sin(alpha);
+                C_X_q = -C_D_q*cos(alpha) + C_L_q*sin(alpha);
+                C_X_delta_e = -C_D_delta_e*cos(alpha) + C_L_delta_e*sin(alpha);
+                C_Z = -C_D*sin(alpha) + C_L*cos(alpha);
+                C_Z_q = -C_D_q*sin(alpha) + C_L_q*cos(alpha);
+                C_Z_delta_e = -C_D_delta_e*sin(alpha) + C_L_delta_e*cos(alpha);
+                % find force due to gravity
+                F_g = [...
+                        -m*g*sin(theta);
+                        m*g*cos(theta)*sin(phi);
+                        m*g*cos(theta)*cos(phi)...
+                    ];
+                % find aerodynamic force due to Lift and pitch rate
+                F_aero = [...
+                            C_X+C_X_q*MAV.c/(2*self.Va)*self.state(12);
+                            MAV.C_Y_0+MAV.C_Y_beta*self.beta+MAV.C_Y_p*MAV.b/(2*self.Va)*state(11)+MAV.C_Y_r*MAV.b/(2*self.Va)*state(13);
+                            C_Z+C_Z_q*MAV.c/(2*self.Va)*state(12)...
+                        ];
+
+                % find force due to control surfaces
+                F_cs = [...
+                        C_X_delta_e*delta_e;
+                        C_Y_delta_a*delta_a+C_Y_delta_r*delta_r;
+                        C_z_delta_e*delta_e...
+                    ];
+                % sum forces together as in eq 4.24
+                Force = F_g+[T_prop;0;0]+1/2*MAV.rho*self.Va^2*MAV.S_wing*F_aero+1/2*MAV.rho*self.Va^2*MAV.S_wing*F_cs;
+            %% AERODYNAMIC MOMENTS
+                % Get first matrix of moment
+                M_aero = [
+                            MAV.b*(MAV.C_ell_0+C_ell_beta*self.beta+C_ell_p*(MAV.b/(2*self.Va)*p)+C_ell_r*(MAV.b/(2*self.Va)*r));
+                            MAV.c*(MAV.C_m_0+C_m_alpha*self.alpha+C_m_q*(MAV.c/(2*self.Va)*q));
+                            MAV.b*(MAV.C_n_0+C_n_beta*self.beta+C_n_p*(MAV.b/(2*self.Va)*p)+C_n_r*(MAV.b/(2*self.Va)*r))
+                        ];
+                
+                % get moments from control surfaces
+                M_cs = [...
+                        MAV.b*(MAV.C_ell_delta_a*delta_a+MAV.C_ell_delta_r*delta_r);
+                        MAV.c*(MAV.C_m_delta_e*delta_e);
+                        MAV.b*(MAV.C_n_delta_a*delta_a+MAV.C_n_delta_r*delta_r)
+                    ];
+                % sum forces together as in eq 4.24
+                Torque = M_g+1/2*MAV.rho*self.Va^2*MAV.S_wing*M_aero+1/2*MAV.rho*self.Va^2*MAV.S_wing*M_cs+[-Q_prop;0;0];
 
             % output total force and torque
             out = [Force'; Torque'];
