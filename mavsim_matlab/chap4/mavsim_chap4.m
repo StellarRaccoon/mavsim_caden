@@ -5,8 +5,11 @@
 %         12/27/2018 - RWB
 %         1/18/2019 - RWB
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+clear all;
+close all;
 run('../parameters/simulation_parameters')  % load SIM: simulation parameters
 run('../parameters/aerosonde_parameters')  % load MAV: aircraft parameters
+run('../parameters/wind_parameters')  % load WIND
 
 % initialize the mav viewer
 addpath('../chap2'); mav_view = mav_viewer();  
@@ -27,15 +30,15 @@ sim_time = SIM.start_time;
 disp('Type CTRL-C to exit');
 while sim_time < SIM.end_time
     %-------set control surfaces-------------
-    delta_e = -0.2;
-    delta_t = 0.5;
-    delta_a = -0.01;  
+    delta_e = .2;
+    delta_t = 0.67;
+    delta_a = 0;  
     delta_r = 0;
     delta = [delta_e; delta_t; delta_a; delta_r];
 
     %-------physical system-------------
     current_wind = wind.update();
-    mav.update(delta, current_wind, MAV);
+    mav.update_state(delta, current_wind, MAV);
     
     %-------update viewer-------------
     mav_view.update(mav.true_state);  % plot body of MAV

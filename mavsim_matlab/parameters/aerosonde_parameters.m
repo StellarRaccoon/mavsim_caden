@@ -99,7 +99,7 @@ MAV.D_prop = 20*(0.0254);     % prop diameter in m
 
 % Motor parameters
 MAV.K_V = 145;                    % from datasheet RPM/V
-MAV.KQ = (1/MAV.K_V)*60/(2*pi);   % KQ in N-m/A, V-s/rad
+MAV.K_Q = (1/MAV.K_V)*60/(2*pi);   % KQ in N-m/A, V-s/rad
 MAV.R_motor = 0.042;              % ohms
 MAV.i0 = 1.5;                     % no-load (zero-torque) current (A)
 
@@ -115,6 +115,5 @@ MAV.C_Q0 = 0.005230;
 MAV.C_T2 = -0.1079;
 MAV.C_T1 = -0.06044;
 MAV.C_T0 = 0.09357;
-
 
 
