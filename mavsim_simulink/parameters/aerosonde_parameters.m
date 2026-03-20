@@ -64,7 +64,8 @@ MAV.M             = 50;
 MAV.alpha0        = 0.47;
 MAV.epsilon       = 0.16;
 MAV.C_D_p         = 0.0;
-
+% in book CMx = C_ell
+% in book CMz = C_n
 MAV.C_Y_0         = 0.0;
 MAV.C_ell_0       = 0.0;
 MAV.C_n_0         = 0.0;
@@ -105,6 +106,4 @@ MAV.C_Q0 = 0.005230;
 MAV.C_T2 = -0.1079;
 MAV.C_T1 = -0.06044;
 MAV.C_T0 = 0.09357;
-
-
 
