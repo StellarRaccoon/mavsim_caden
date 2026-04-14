@@ -1,173 +1,130 @@
 %  MAV.Create a function that computes the trim state and the trim
-% inputs for a desired airspeed of ∗ and a desired flight path
-% angle of ∗. Set the initial condition in your simulation to the
+% inputs for a desired airspeed of Va and a desired flight path
+% angle of gamma. Set the initial condition in your simulation to the
 % trim state and trim input, and verify that the airMAV.craft maintains
 % trim until numerical errors cause it to drift
 
 %unknowns are angle of attack, pitch angle theta, elevator deflection delta e, throttle delta e
 function [x_trim, u_trim] = compute_trim(mav, Va, gamma, MAV)
-    % Va is the desired airspeed (m/s)
-    % gamma is the desired flight path angle (radians)
-    % R is the desired radius (m) - use (+) for right handed orbit, 
-%                                       (-) for left handed orbit
+    gamma
+    alpha0 = 5*pi/180;
 
-    % define initial state and input
-    addpath('../tools');
+
+    theta = alpha0;
+    e = Euler2Quaternion(0, theta,0);
     state0 = [
-        MAV.pn0;
-        MAV.pe0;
-        MAV.pd0;
-        MAV.u0;
-        MAV.v0;
-        MAV.w0;
-        MAV.phi0;
-        MAV.theta0;
-        MAV.psi0;
-        MAV.p0;
-        MAV.q0;
-        MAV.r0
+        0; % pn
+        0; % pe
+        mav.state(3); % pd
+        Va*cos(theta);
+        0; % v
+        Va*sin(theta);; % w
+        e(1); % e0
+        e(2); % e1
+        e(3); % e2
+        e(4); % e3
+        0; % p
+        0; % q
+        0 % r
     ];
 
-    delta_e = 0;
-    delta_t = 0.67;
-    delta_a = 0;  
-    delta_r = 0;
-    delta0 = [delta_e; delta_t; delta_a; delta_r];
+    delta0 = [
+            0; % delta_e 
+            0.5; % delta_t
+            0; % delta_a
+            0  % delta_r
+        ];
+        % bounds for states (13 states)
+lb_x = -inf(13,1);
+ub_x =  inf(13,1);
+
+% bounds for controls (match Python)
+lb_delta = [-1; 0; -1; -1];   % throttle >= 0
+ub_delta = [ 1; 1;  1;  1];
+
+lb = [lb_x; lb_delta];
+ub = [ub_x; ub_delta];
 
     x0 = [ state0; delta0 ];
-    xstar = fmincon(@trim_objective, x0, [], [],...
-                    [], [], [], [], @trim_constraints, [],...
-                    mav, Va, gamma, MAV);
+
+    to =  @(xu) trim_objective(xu, mav, Va, gamma, MAV);
+    tc = @(xu) trim_constraints(xu, mav, Va, gamma, MAV);
+options = optimset('Display','iter','MaxIter',1000,'TolFun',1e-9,'TolX',1e-9);
+    xstar = fmincon(to, x0, [], [],...
+                    [], [], lb, ub, tc);
+    % xstar = fmincon(to, x0, [], [],...
+    %                 [], [], [], [], tc);
+    [c, ceq] = trim_constraints(xstar, mav, Va, gamma, MAV);
+    disp('J:');
+    % disp(max(abs(ceq)));  % Be near 0
+    fprintf("J\n");
+    % J = trim_objective(xstar, mav, Va, gamma, MAV);
     x_trim = xstar(1:13);
     u_trim = xstar(14:17);
-    J = trim_objective(xstar, mav, Va, gamma, MAV);
 end
 
 % objective function to be minimized f(x,u) where x is the states and u is the control surface deltas
-function J = trim_objective(x, mav, Va, gamma, MAV)
-    x = x(1:13);
-    u = x(14:17);
+%we want all the derivatives to be 0
+function J = trim_objective(xu, mav, Va, gamma, MAV)
+    x = xu(1:13);
+    delta = xu(14:17); %extract the deltas
+
+    %goal derivatives are at 0
+    xdot_target = [0;0;-Va*sin(gamma);0;0;0;0;0;0;0;0;0;0];
     
-    % get the nonlinear xdot
-    forces_moments = mav.forces_moments(u, MAV);
-    xdot = mav.derivatives(mav, x, forces_moments, MAV)
-    % desired trim
-    xdot_star = [
-        0.1;
-        0.1;
-        Va * sin(gamma);
-        0;
-        0;
-        0;
-        0;
-        0;
-        0;
-        0;
-        0;
-        0
+    %find the forces and moments needed given the current delta
+    mav.state = x;
+    mav.update_velocity_data(zeros(6,1)); %set wind as 0
+    forces_moments = mav.forces_moments(delta, MAV);
+    xdot = mav.derivatives(x, forces_moments, MAV);
+
+    error = xdot_target-xdot;
+
+    % J = norm(error(3:13).^2);
+    J = error(3:13).' * error(3:13);   % ||error(3:13)||^2
+
+end
+
+% % nonlinear constraints for trim optimization
+% function [c, ceq] = trim_constraints(xu, mav, Va, gamma, MAV)
+%     ceq = [                             
+%         xu(4)^2 + xu(5)^2 + xu(6)^2 - Va^2,  # Va=Vg
+%         xu(5),  # v=0
+%         xu(7)^2 + xu(8)^2 + xu(9)^2 + xu(10)^2 - 1,  # Unit length quant
+%         xu(8),  # e1=0
+%         xu(10),  # e3=0
+%         xu(11),  # p=0 
+%         xu(12),  # q=0
+%         xu(13)  # r=0
+%         ];
+%     c =[];
+
+% end
+function [c, ceq] = trim_constraints(xu, mav, Va, gamma, MAV)
+    x     = xu(1:13);
+    delta = xu(14:17);
+
+    mav.state = x;
+    mav.update_velocity_data(zeros(6,1));
+    fm   = mav.forces_moments(delta, MAV);
+    xdot = mav.derivatives(x, fm, MAV);
+mav.state = x;
+mav.update_velocity_data(zeros(6,1));
+fm   = mav.forces_moments(delta, MAV);
+xdot = mav.derivatives(x, fm, MAV);
+
+
+    ceq = [
+        x(4)^2 + x(5)^2 + x(6)^2 - Va^2;
+        x(5);
+        x(7)^2 + x(8)^2 + x(9)^2 + x(10)^2 - 1;
+        x(8);
+        x(10);
+        x(11);
+        x(12);
+        x(13);
+        % xdot(3) + Va*sin(gamma);   % enforce vertical trim
     ];
-    % we want 0=f(x,u)-xdot* where f(x,u) = xdot and f(x*,u*) = xdot*
-    r = xdot - xdot_star;
-    % Squared norm - a scalar
-    J = r'*r;
-
-
+    c = [];
+    ceq(end+1) = xdot(3) + Va*sin(gamma);   % enforce vertical trim
 end
-
-% nonlinear constraints for trim optimization
-function [c, ceq] = trim_constraints(x, mav, Va, gamma, MAV)
-u       = x(4);
-v       = x(5);
-w       = x(6);
-
-% Va must be constant
-Va_current = sqrt(u^2+v^2+w^2);
-%gamma must be constant
-gamma_current = atan2(-w,sqrt(u^2+v^2));
-ceq = [Va_current - Va; gamma_current - gamma];
-c = [];
-end
-
-
-
-% %%FIND F(X,U)
-% % get the variables from x
-% pn      = x(1);
-% pe      = x(2);
-% h       = x(3);
-% u       = x(4);
-% v       = x(5);
-% w       = x(6);
-% phi     = x(7);
-% theta   = x(8);
-% psi     = x(9);
-% p       = x(10);
-% q       = x(11);
-% r       = x(12);
-% delta_e = u(1);
-% delta_t = u(2);
-% delta_a = u(3);
-% delta_r = u(4);
-
-% [CD, CL] = drag_and_lift_coiff(mav.alpha);
-% % X-axis force coefficients
-% CX      = -CD*cos(mav.alpha) + CL*sin(mav.alpha);
-% CXq     = -CDq*cos(mav.alpha) + CLq*sin(mav.alpha);
-% CXde    = -CDde*cos(mav.alpha) + CLde*sin(mav.alpha);
-
-% % Z-axis force coefficients
-% CZ      = -CD*sin(mav.alpha) - CL*cos(mav.alpha);
-% CZq     = -CDq*sin(mav.alpha) - CLq*cos(mav.alpha);
-% CZde    = -CDde*sin(mav.alpha) - CLde*cos(mav.alpha);
-
-% % get propeller force and torque
-% [T_p, Q_p] = prop_force_and_torque(Va, delta_t);
-
-%     % Position kinematics
-% pndot =  cos(theta)*cos(psi)*u ...
-%         + (sin(phi)*sin(theta)*cos(psi) - cos(phi)*sin(psi))*v ...
-%         + (cos(phi)*sin(theta)*cos(psi) + sin(phi)*sin(psi))*w;
-
-% pedot =  cos(theta)*sin(psi)*u ...
-%         + (sin(phi)*sin(theta)*sin(psi) + cos(phi)*cos(psi))*v ...
-%         + (cos(phi)*sin(theta)*sin(psi) - sin(phi)*cos(psi))*w;
-
-% hdot  =  u*sin(theta) ...
-%         - v*sin(phi)*cos(theta) ...
-%         - w*cos(phi)*cos(theta);
-
-% % Translational dynamics
-% udot =  r*v - q*w ...
-%         - MAV.gravity*sin(theta) ...
-%         + (MAV.rho*Va^2*MAV.S_wing)/(2*m) * ( CX + CXq*(MAV.c*q/(2*Va)) + CXde*delta_e ) ...
-%         + T_p;
-
-% vdot =  p*w - r*u ...
-%         + MAV.gravity*cos(theta)*sin(phi) ...
-%         + (MAV.rho*Va^2*MAV.S_wing)/(2*m) * ( CY0 + CYb*mav.beta + CYp*(MAV.b*p/(2*Va)) ...
-%         + CYr*(MAV.b*r/(2*Va)) + CYda*delta_a + CYdr*delta_r );
-
-% wdot =  q*u - p*v ...
-%         + MAV.gravity*cos(theta)*cos(phi) ...
-%         + (MAV.rho*Va^2*MAV.S_wing)/(2*m) * ( CZ + CZq*(MAV.c*q/(2*Va)) + CZde*delta_e );
-
-% % Euler angle kinematics
-% phidot   = p + q*sin(phi)*tan(theta) + r*cos(phi)*tan(theta);
-% thetadot = q*cos(phi) - r*sin(phi);
-% psidot   = q*sin(phi)/cos(theta) + r*cos(phi)/cos(theta);
-
-% % Rotational dynamics
-% pdot =  MAV.Gamma1*p*q - MAV.Gamma2*q*r ...
-%         + 0.5*MAV.rho*Va^2*MAV.S_wing*MAV.b * ( MAV.C_p_0 + MAV.C_p_beta*mav.beta + MAV.C_p_p*(MAV.b*p/(2*Va)) ...
-%         + MAV.C_p_r*(MAV.b*r/(2*Va)) + MAV.C_p_delta_a*delta_a + MAV.C_p_delta_r*delta_r ) ...
-%         -MAV.Gamma3*Q_p;
-% qdot = MAV.Gamma5*p*r ...
-%         - MAV.Gamma6*(p^2 - r^2) ...
-%         + (MAV.rho*Va^2*MAV.S_wing*MAV.c)/(2*MAV.Jy) * ( MAV.C_m_0 + MAV.C_m_alpha*mav.alpha + MAV.C_m_q*(MAV.c*q/(2*Va)) + C_m_delta_e* delta_e);
-
-% rdot = MAV.Gamma7*p*q ...
-%         - MAV.Gamma1*q*r ...
-%         + 0.5*MAV.rho*Va^2*MAV.S_wing*MAV.b * ( MAV.C_r_0 + MAV.C_r_beta*mav.beta ...
-%         + MAV.C_r_p*(MAV.b*p/(2*Va)) + MAV.C_r_r*(MAV.b*r/(2*Va)) ...
-%         + MAV.C_r_delta_a*delta_a + MAV.C_r_delta_r*delta_r ) ...
-%         - Gamma4*Q_p;

@@ -27,7 +27,8 @@ sim_time = SIM.start_time;
 disp('Type CTRL-C to exit');
 while sim_time < SIM.end_time
     %-------vary forces and moments to check dynamics-------------
-    fx = 10;
+    % we later vary these using aerodynamic forces and control surface forces
+    fx = 0;
     fy = 0; % 10;
     fz = 0; % 10;
     Mx = 0; % 0.1;

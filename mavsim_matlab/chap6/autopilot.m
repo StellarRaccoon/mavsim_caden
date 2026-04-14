@@ -59,17 +59,19 @@ classdef autopilot < handle
         end
         %------methods-----------
         function [delta, commanded_state] = update(self, cmd, state)
-            % lateral autopilot
-            phi_c = 
-            delta_a = 
-            delta_r = 
+            % update using the defined functions to get the commanded states as reswuested by the course command. 
+            % this puts the close the loop steps into order
+            % lateral  autopilot
+            phi_c = self.roll_from_roll.update(cmd.course_command,state.chi, reset_flag=true);
+            delta_a = self.roll_from_aileron.update(phi_c, state.phi,state.p);
+            delta_r = self.sideslip_from_rudder.update(0,state.beta);
 
             % longitudinal autopilot
-            h_c = 
-            theta_c = 
-            delta_e = 
-            delta_t = 
-            delta_t = 
+            h_c = cmd.altitude_command;
+            theta_c = pi/16;
+            delta_e = self.altitude_from_pitch.update(h_c,state.h);
+            delta_t = self.pitch_from_elevator.update(theta_c, state.theta, state.q);
+            delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va);
 
             % construct output and commanded states
             delta = [delta_e; delta_a; delta_r; delta_t];
@@ -92,3 +94,9 @@ classdef autopilot < handle
         end
     end
 end
+% Implement the longitudinal autopilot and tune the gains. The
+% input the longitudinal autopilot is the commanded airspeed
+% and the commanded altitude. To make the process easier, you
+% may want to initialize the system to trim inputs and then tune
+% airspeed control first, followed by the pitch loop, and then the
+% altitude loop.

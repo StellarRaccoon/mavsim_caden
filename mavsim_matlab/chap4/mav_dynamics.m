@@ -242,6 +242,7 @@ classdef mav_dynamics < handle
                         MAV.b*(MAV.C_n_delta_a*delta_a+MAV.C_n_delta_r*delta_r)
                     ];
                     
+                    
                 % sum forces together as in eq 4.24
                 Torque = 1/2*MAV.rho*self.Va^2*MAV.S_wing*M_aero+1/2*MAV.rho*self.Va^2*MAV.S_wing*M_cs+[-Q_prop;0;0];
             % output total force and torque
@@ -286,9 +287,12 @@ classdef mav_dynamics < handle
             % self.true_state.chi = self.true_state.psi + self.beta + acos(frac);
             % fprintf("Chi %.5f\n",self.true_state.chi)
             % % transform velocity back to interial fram to get ground velocity
-            R_vb = Quaternion2Rotation(self.state(7:10));
-            V_body = [self.state(4); self.state(5); self.state(6)];
-            V_inertial = R_vb * V_body;
+            % R_vb = Quaternion2Rotation(self.state(7:10));
+            % V_body = [self.state(4); self.state(5); self.state(6)];
+            % V_inertial = R_vb * V_body;
+R_vb = Quaternion2Rotation(self.state(7:10));  % body → inertial
+V_body = [self.state(4); self.state(5); self.state(6)];
+V_inertial = R_vb * V_body;                    % body → inertial
 
             % ground velocity
             Vg_vec = V_inertial + [wn; we; wd];
@@ -298,8 +302,8 @@ classdef mav_dynamics < handle
             self.true_state.chi = atan2(Vg_vec(2), Vg_vec(1));
             %current flight path angle - angle between velocity and horizonntal plane (pitch angle to aoa)
             % self.true_state.gamma = self.true_state.theta - self.alpha;%-asin(Vg_vec(3)/self.true_state.Vg);
-self.true_state.gamma = atan2(-Vg_vec(3), sqrt(Vg_vec(1)^2 + Vg_vec(2)^2));
-
+            self.true_state.gamma = atan2(-Vg_vec(3), sqrt(Vg_vec(1)^2 + Vg_vec(2)^2));
+% self.msg_true_state.gamma = accos(Vg.dot(Vg_h)/(Vg_M*Vg_h_M))
             self.true_state.wn = wind(1);
             self.true_state.we = wind(2);
 

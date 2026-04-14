@@ -59,7 +59,6 @@ classdef mav_dynamics < handle
             m     = forces_moments(5);
             n     = forces_moments(6);
             
-            % quanternion rotation matrix
 
             % position kinematics
             pos_dot = Quaternion2Rotation([e0, e1, e2, e3]) * [u; v; w];
@@ -74,6 +73,7 @@ classdef mav_dynamics < handle
             v_dot = vel_dot(2);
             w_dot = vel_dot(3);
             %fprintf("u_dot: %d v_dot: %d w_dot: %d\n", u_dot, v_dot, w_dot);
+
             % rotational kinematics
             temp = [
                     0, -p, -q, -r;
@@ -86,8 +86,8 @@ classdef mav_dynamics < handle
             e1_dot = e_dot(2);
             e2_dot = e_dot(3);
             e3_dot = e_dot(4);
+
             % rotational dynamics
-            
             Gamma1 = MAV.Gamma1;
             Gamma2 = MAV.Gamma2;
             Gamma3 = MAV.Gamma3;
@@ -105,21 +105,21 @@ classdef mav_dynamics < handle
             r_dot = rate_dot(3);
         
             % collect all the derivaties of the states
-            xdot = [pn_dot; pe_dot; pd_dot; u_dot; v_dot; w_dot;...
+            xdot = [pn_dot; pe_dot; pd_dot; u_dot; v_dot; w_dot;
                     e0_dot; e1_dot; e2_dot; e3_dot; p_dot; q_dot; r_dot];
         end
         %----------------------------
         function self=update_true_state(self)
-            [phi, theta, psi] = Quaternion2Euler(self.state(7:10));
+            e = Quaternion2Euler(self.state(7:10));
             self.true_state.pn = self.state(1);  % pn
             self.true_state.pe = self.state(2);  % pd
             self.true_state.h = -self.state(3);  % h
-            self.true_state.phi = phi; % phi
-            self.true_state.theta = theta; % theta
-            self.true_state.psi = psi; % psi
-            self.true_state.p = self.state(11); % p
-            self.true_state.q = self.state(12); % q
-            self.true_state.r = self.state(13); % r
+            self.true_state.phi = e(1);           % phi
+            self.true_state.theta = e(2);       % theta
+            self.true_state.psi = e(3);           % psi
+            self.true_state.p = self.state(11);  % p
+            self.true_state.q = self.state(12);  % q
+            self.true_state.r = self.state(13);  % r
         end
     end
 end

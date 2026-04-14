@@ -1,4 +1,4 @@
-function [C_D, C_L] = drag_and_lift_coiff(alpha)
+function [C_D, C_L] = drag_and_lift_coiff(alpha, MAV)
     sigma_alpha = (1 + exp(-MAV.M*(alpha - MAV.alpha0)) + exp(MAV.M*(alpha + MAV.alpha0))) ...
                 ./ ((1 + exp(-MAV.M*(alpha - MAV.alpha0))) .* (1 + exp(MAV.M*(alpha + MAV.alpha0))));
 

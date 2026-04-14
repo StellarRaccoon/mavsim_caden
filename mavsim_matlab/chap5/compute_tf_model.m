@@ -34,11 +34,10 @@ delta_t_trim = u_trim(4);
 
 %get Va
 Va_trim = sqrt(u^2+v^2+w^2);
-    % i think C_p is C_Y??
-    % TO DO WHAT IS Q_p
     % d_phi_1 = q*sin(phi)*tan(theta)+r*cos(phi)*tan(theta);
     a_phi1 = -1/2*MAV.rho*Va_trim^2*MAV.S_wing*MAV.C_Y_p*b/(2*Va_trim);
     a_phi2 = 1/2*MAV.rho*Va_trim^2*MAV.S_wing*MAV.C_Y_delta_a;
+
     % d_phi2 = Gamma1*p*q-Gamma2*q*r...
     %         +/2*rho*Va^2*MAV.S_wing*b(C_Y_0+C_Y_beta*beta- MAV.C_Y_p*b/(2*Va)*d_phi_1+C_Y_r*b*r/(2*Va)+C_Y_delta_r*del_r)...
     %         - Gamma3*Q_p+d_phi_1;
@@ -47,8 +46,6 @@ Va_trim = sqrt(u^2+v^2+w^2);
     % a_pi2/(s^2+a_pi1*s+0)
     T_phi_delta_a = tf([a_phi2], [1 a_phi1 0]);
 
-    %g/Vg / s
-    %TO DO HOW TO GET VG
     T_chi_phi = tf([MAV.gravity/Va_trim], [1 0]);
     
     a_theta1 = (-MAV.rho*Va_trim^2*c*MAV.S_wing/(2*Jy))*MAV.C_m_q*c/(2*Va_trim);
@@ -63,8 +60,9 @@ Va_trim = sqrt(u^2+v^2+w^2);
     T_h_Va = tf([theta_trim], [1 0]);
 
 % velocities
-dT_dVa = dT_dVa(mav, Va_trim, delta_t_trim)
-dT_ddelta_t = dT_ddelta_t(mav, Va_trim, delta_t_trim)
+dT_dVa = dT_dVa(mav, Va_trim, delta_t_trim, MAV);
+dT_ddelta_t = dT_ddelta_t(mav, Va_trim, delta_t_trim, MAV);
+
 a_V1 = (-MAV.rho*Va_trim^2*c*MAV.S_wing/MAV.mass)*(MAV.C_D_0+MAV.C_D_alpha*alpha_trim+MAV.C_D_delta_e*delta_e_trim)...
         -(1/MAV.mass)*dT_dVa;
 a_V2 = (1/MAV.mass)*dT_ddelta_t;
@@ -74,19 +72,26 @@ T_Va_delta_t    = tf([a_V2],[1,a_V1]);
 T_Va_theta      = tf([-a_V3],[1,a_V1]);
 % TO DO FIND TV DELTA R
 % T_v_delta_r     = tf([a_beta2],[1,a_beta1]);
-
-    
+save transfer_function_coef.mat a_phi1 a_phi1 a_theta1 a_theta2 a_theta3 a_V1 a_V2 a_V3;
+%apptox values
+% a_phi_2 = 130.6
+% a_phi_1 = 22.6
+% a_theta_1 = 5.288
+% a_theta_2 = 99.7
+% a_theta_3 = -36.02
+% a_v_1 = 0.6607
+% a_v_2 = 47.02
 end
 
 % returns the derivative of motor thrust with respect to Va
 % use finite central difference
-function dThurst = dT_dVa(mav, Va, delta_t)
+function dThurst = dT_dVa(mav, Va, delta_t, MAV)
     % set step very small
-    dVa = 10^-8
+    dVa = 10^-8;
     % find Tp using Va+dVa
-    [T_p1, Q_prop] = prop_force_and_torque(Va+dVa, delta_t)
+    [T_p1, Q_prop] = prop_force_and_torque(Va+dVa, delta_t, MAV);
     % find Tp using Va-dVa
-    [T_m1, Q_prop] = prop_force_and_torque(Va-dVa, delta_t)
+    [T_m1, Q_prop] = prop_force_and_torque(Va-dVa, delta_t, MAV);
     % apply central difference formula
     dThrust = (T_p1-T_m1)/(2*dVa);
 end
@@ -94,11 +99,11 @@ end
 % returns the derivative of motor thrust with respect to delta_t
 function dThurst = dT_ddelta_t(mav, Va, delta_t)
     % set step very small
-    ddetlta_t = 10^-8
+    ddetlta_t = 10^-8;
     % find Tp using Va+dVa
-    [T_p1, Q_prop] = prop_force_and_torque(Va, delta_t+ddetlta_t);
+    [T_p1, Q_prop] = prop_force_and_torque(Va, delta_t+ddetlta_t, MAV);
     % find Tp using Va-dVa
-    [T_m1, Q_prop] = prop_force_and_torque(Va, delta_t-ddetlta_t);
+    [T_m1, Q_prop] = prop_force_and_torque(Va, delta_t-ddetlta_t, MAV);
     % apply central difference formula
     dThrust = (T_p1-T_m1)/(2*ddetlta_t);
 end

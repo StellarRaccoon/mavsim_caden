@@ -13,43 +13,46 @@ classdef wind_simulation < handle
         B
         C
         gust_state
-        _gust
+        gust
         Ts
     end
     %--------------------------------
     methods
         %------constructor-----------
-        function self = wind_simulation(Ts)
-            run('../parameters/wind_parameters')  % load WIND
-            self.steady_state = [0;0;0];%todo
+        function self = wind_simulation(Ts, WIND)
+            self.steady_state = [WIND.wind_n;WIND.wind_e;WIND.wind_d];
+
+            %apply Dryden filters  and transform functions
             %H(u)
-            Ku = WIND.sigma_u * sqrt(2*WIND.Va0/(pi*WIND.L_u));
-            Hu = Ku * tf(1, [WIND.L_u/WIND.Va0 1]);
+            outer = WIND.sigma_u * sqrt(2*WIND.Va0/(pi*WIND.L_u));
+            Hu = tf(outer, [WIND.L_u/WIND.Va0, 1]);
 
             %H(v)
-            Kv = WIND.sigma_v * sqrt(3*WIND.Va0/(pi*WIND.L_v));
-            num = [2*sqrt(3)*WIND.L_v/WIND.Va0 1];
-            den = conv([WIND.L_v/WIND.Va0 1], [WIND.L_v/WIND.Va0 1]);   % (1 + L/V s)^2
-            Hv = Kv * tf(num, den);
+            outer = WIND.sigma_v * sqrt(3*WIND.Va0/(pi*WIND.L_v));
+            num = [outer, outer*(WIND.Va0/(sqrt(3)*WIND.L_v))];
+            den = [1, 2*WIND.Va0/WIND.L_v, (WIND.Va0/WIND.L_v)^2];   % (1 + L/V s)^2
+            Hv = tf(num, den);
 
             %H(w)
-            Kw = WIND.sigma_w * sqrt(3*WIND.Va0/(pi*WIND.L_w));
-            num = [2*sqrt(3)*WIND.L_w/WIND.Va0 1];
-            den = conv([WIND.L_w/WIND.Va0 1], [WIND.L_w/WIND.Va0 1]);
-            Hw = Kw * tf(num, den);
+            outer = WIND.sigma_w * sqrt(3*WIND.Va0/(pi*WIND.L_w));
+            num = [outer, outer*(WIND.Va0/(sqrt(3)*WIND.L_w))];
+            den = [1, 2*WIND.Va0/WIND.L_w, (WIND.Va0/WIND.L_w)^2];   % (1 + L/V s)^2
+            Hw = tf(num, den);
 
+            % create diagnoal matrix
             H = blkdiag(Hu, Hv, Hw);
             stateSpace = ss(H);
             self.A = stateSpace.A;
             self.B = stateSpace.B;
             self.C = stateSpace.C;
-            self.gust_state = zeros(size(self.A,1),1)
-            self._gust = [0; 0; 0];
+            self.gust_state = zeros(size(self.A,1),1);
+            self.gust = [0; 0; 0];
             self.Ts = Ts;
         end
         %---------------------------
         function wind=update(self)
-            wind = [self.steady_state; self._gust];
+            % self.gust();
+            wind = [self.steady_state; self.gust];
         end
         %----------------------------
         function self = gust(self)
@@ -58,7 +61,7 @@ classdef wind_simulation < handle
             % x = Ax +Bw
             self.gust_state = self.gust_state + self.Ts*(self.A*self.gust_state + self.B*w);
             % gust velocities = C*x
-            self._gust = self.C*self.gust_state;
+            self.gust = self.C*self.gust_state;
         end
     end
 end

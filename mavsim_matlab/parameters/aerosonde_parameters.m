@@ -13,8 +13,8 @@ MAV.Jxz  = 0.120;
 % initial conditions
 MAV.pn0    = 0;     % initial North position
 MAV.pe0    = 0;     % initial East position
-MAV.pd0    = -100;  % initial Down position (negative altitude)
-MAV.u0     = 0;%17;     % initial velocity along body x-axis
+MAV.pd0    = -10;  % initial Down position (negative altitude)
+MAV.u0     = 17;%17;     % initial velocity along body x-axis
 MAV.v0     = 0;     % initial velocity along body y-axis
 MAV.w0     = 0;     % initial velocity along body z-axis
 MAV.phi0   = 0;     % initial roll angle
@@ -28,7 +28,7 @@ MAV.e3     = e(4);
 MAV.p0     = 0;     % initial body frame roll rate
 MAV.q0     = 0;     % initial body frame pitch rate
 MAV.r0     = 0;     % initial body frame yaw rate
-
+MAV.Va0 = sqrt(MAV.u0^2+MAV.v0^2+MAV.w0^2);
 % Gamma parameters from uavbook page 36
 MAV.Gamma  = MAV.Jx*MAV.Jz-MAV.Jxz^2;
 MAV.Gamma1 = (MAV.Jxz*(MAV.Jx-MAV.Jy+MAV.Jz))/MAV.Gamma;

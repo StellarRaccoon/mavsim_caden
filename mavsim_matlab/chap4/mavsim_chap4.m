@@ -5,8 +5,7 @@
 %         12/27/2018 - RWB
 %         1/18/2019 - RWB
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-clear all;
-close all;
+
 run('../parameters/simulation_parameters')  % load SIM: simulation parameters
 run('../parameters/aerosonde_parameters')  % load MAV: aircraft parameters
 run('../parameters/wind_parameters')  % load WIND
@@ -20,7 +19,7 @@ VIDEO = 0;  % 1 means write video, 0 means don't write video
 if VIDEO==1, video=video_writer('chap4_video.avi', SIM.ts_video); end
 
 % initialize elements of the architecture
-addpath('../chap4'); wind = wind_simulation(SIM.ts_simulation);
+addpath('../chap4'); wind = wind_simulation(SIM.ts_simulation, WIND);
 addpath('../chap4'); mav = mav_dynamics(SIM.ts_simulation, MAV);
 
 % initialize the simulation time
@@ -30,10 +29,11 @@ sim_time = SIM.start_time;
 disp('Type CTRL-C to exit');
 while sim_time < SIM.end_time
     %-------set control surfaces-------------
-    delta_e = .2;
-    delta_t = 0.67;
-    delta_a = 0;  
-    delta_r = 0;
+    delta_e = 0%-0.1248;
+    delta_t = 0;
+    delta_a = 0.5;%0.001836;
+    delta_r = 0;%-0.0003026;
+
     delta = [delta_e; delta_t; delta_a; delta_r];
 
     %-------physical system-------------
