@@ -190,8 +190,9 @@ classdef mav_dynamics < handle
             delta_r = delta(4);
             %% PROPELLER FORCE AND TORQUE Algorithim 4.1
             [~, Q_prop] = prop_force_and_torque(self.Va, delta_t,MAV);
+            % This uses a simpliefied propeller force 
             F_prop = 0.5*MAV.rho*MAV.S_prop*MAV.C_prop*((MAV.k_motor*delta_t)^2-self.Va^2);
-            % fprintf("Simple F_prop: %.5f\n", F_prop);
+            
             %% AERODYNAMIC FORCES [fx; fy; fz] eq 4.24
             % effect of lift and drag on aircraft
                 [C_D, C_L] = drag_and_lift_coiff(self.alpha, MAV);
