@@ -73,8 +73,7 @@ function J = trim_objective(xu, mav, Va, gamma, MAV)
 
     error = xdot_target-xdot;
 
-    J = error(3:13).' * error(3:13);  2
-
+    J = error(3:13).' * error(3:13);
 end
 
 function [c, ceq] = trim_constraints(xu, mav, Va, gamma, MAV)
