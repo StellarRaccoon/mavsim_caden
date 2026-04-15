@@ -6,19 +6,14 @@
 
 %unknowns are angle of attack, pitch angle theta, elevator deflection delta e, throttle delta e
 function [x_trim, u_trim] = compute_trim(mav, Va, gamma, MAV)
-    gamma
-    alpha0 = 5*pi/180;
-
-
-    theta = alpha0;
-    e = Euler2Quaternion(0, theta,0);
+    e = Euler2Quaternion(0, gamma,0);
     state0 = [
         0; % pn
         0; % pe
         mav.state(3); % pd
-        Va*cos(theta);
+        Va*cos(gamma);
         0; % v
-        Va*sin(theta);; % w
+        Va*sin(gamma); % w
         e(1); % e0
         e(2); % e1
         e(3); % e2
@@ -63,7 +58,21 @@ function J = trim_objective(xu, mav, Va, gamma, MAV)
     delta = xu(14:17); %extract the deltas
 
     %goal derivatives are at 0
-    xdot_target = [0;0;-Va*sin(gamma);0;0;0;0;0;0;0;0;0;0];
+    xdot_target = [
+                    0; 
+                    0;
+                    -Va*sin(gamma);
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0;
+                    0
+                ];
     
     %find the forces and moments needed given the current delta
     mav.state = x;
