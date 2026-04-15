@@ -94,6 +94,7 @@ fprintf("Gamma calculated from trim - steady flight should be 0\n\tGamma: %.4f\n
 sim_time = SIM.start_time;
 
 lambda = eig(A_lat)
+    d_trim = delta(1)
 % main simulation loop
 disp('Type CTRL-C to exit');
 while sim_time < SIM.end_time
@@ -103,13 +104,12 @@ while sim_time < SIM.end_time
     current_wind = zeros(6,1);
     % fprintf("Chap 5 delta\n")
     % delta
-    
-    % if abs(sim_time - 0.6) < 1e-6
-    %     fprintf("phougoid impulese")
-    %     delta(1) = 0.5 ;
-    % elseif abs(sim_time - (0.6+0.12)) < 1e-6
-    % delta(1) = 0 ;
-    
+    if abs(sim_time - 3.0) < 1e-6
+        fprintf("phougoid impulese")
+        delta(1) = d_trim+0.4;
+    else
+    delta(1) = d_trim;
+    end
     % elseif abs(sim_time - (0.6+SIM.ts_simulation)) < 1e-6
     % delta(3) = -0.2;
     % end

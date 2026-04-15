@@ -30,9 +30,9 @@ classdef mav_viewer < handle
                 zlabel('-Down')
                 view(32,47)  % set the vieew angle for figure
                 % axis([-10,10,-10,10,-10,10]);
-                axis([-70,10,...
-                0,200,... %north
-                0,120
+                axis([-50,10,...
+                0,150,... %north
+                0,80
                 ]);
                 axis equal;
                 hold on

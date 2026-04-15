@@ -22,7 +22,7 @@ function [T_prop, Q_prop] = prop_force_and_torque(Va, delta_t, MAV)
         C_T_J = MAV.C_T0+MAV.C_T1*J+MAV.C_T2*J^2;
         % T_prop = (MAV.rho*MAV.D_prop^4/(4*pi^2))*Omega_prop^2*(MAV.C_T2*J^2+MAV.C_T1*J+MAV.C_T0);
         n = Omega_prop / (2*pi);
-        T_prop = MAV.rho * n^2 * MAV.D_prop^4 * C_T_J
+        T_prop = MAV.rho * n^2 * MAV.D_prop^4 * C_T_J;
     % Compute Q_prop, torque produced by propeller, using eq 4.18
         % Find C_Q(J)
         C_Q_J = MAV.C_Q0+MAV.C_Q1*J+MAV.C_Q2*J^2;
