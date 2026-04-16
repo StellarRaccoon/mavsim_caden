@@ -28,6 +28,8 @@ function [x_trim, u_trim] = compute_trim(mav, Va, gamma, MAV)
             0.5; % delta_t
             0; % delta_a
             0  % delta_r
+            0;
+            0;
         ];
         % bounds for states (13 states)
     lb_x = -inf(13,1);
@@ -48,14 +50,14 @@ function [x_trim, u_trim] = compute_trim(mav, Va, gamma, MAV)
                     [], [], lb, ub, tc);
     [c, ceq] = trim_constraints(xstar, mav, Va, gamma, MAV);
     x_trim = xstar(1:13);
-    u_trim = xstar(14:17);
+    u_trim = xstar(14:19);
 end
 
 % objective function to be minimized f(x,u) where x is the states and u is the control surface deltas
 %we want all the derivatives to be 0
 function J = trim_objective(xu, mav, Va, gamma, MAV)
     x = xu(1:13);
-    delta = xu(14:17); %extract the deltas
+    delta = xu(14:19); %extract the deltas
 
     %goal derivatives are at 0
     xdot_target = [
@@ -77,6 +79,8 @@ function J = trim_objective(xu, mav, Va, gamma, MAV)
     %find the forces and moments needed given the current delta
     mav.state = x;
     mav.update_velocity_data(zeros(6,1)); %set wind as 0
+    mav.reset_tv_history(delta(5), delta(5), 0);
+
     forces_moments = mav.forces_moments(delta, MAV);
     xdot = mav.derivatives(x, forces_moments, MAV);
 
@@ -87,7 +91,7 @@ end
 
 function [c, ceq] = trim_constraints(xu, mav, Va, gamma, MAV)
     x     = xu(1:13);
-    delta = xu(14:17);
+    delta = xu(14:19);
     ceq = [
         x(4)^2 + x(5)^2 + x(6)^2 - Va^2;
         x(5);
@@ -97,6 +101,8 @@ function [c, ceq] = trim_constraints(xu, mav, Va, gamma, MAV)
         x(11);
         x(12);
         x(13);
+        delta(5);
+        delta(6);
     ];
     c = [];
 end

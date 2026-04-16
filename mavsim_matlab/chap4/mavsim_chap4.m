@@ -7,7 +7,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 run('../parameters/simulation_parameters')  % load SIM: simulation parameters
-run('../parameters/aerosonde_parameters')  % load MAV: aircraft parameters
+run('../parameters/aerosonde_parameters');  % load MAV: aircraft parameters
 run('../parameters/wind_parameters')  % load WIND
 
 % initialize the mav viewer

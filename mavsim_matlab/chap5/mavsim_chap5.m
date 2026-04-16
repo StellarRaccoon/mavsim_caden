@@ -5,7 +5,7 @@
 %         2/5/2019 - RWB
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 run('../parameters/simulation_parameters')  % load SIM: simulation parameters
-run('../parameters/aerosonde_parameters')  % load MAV: aircraft parameters
+run('../parameters/aerosonde_parameters');  % load MAV: aircraft parameters
 run('../parameters/wind_parameters')  % load WIND
 
 % initialize the mav viewer
@@ -61,12 +61,14 @@ fprintf("TRIM INPUT- straight and level should onlt have elevator and throttle:\
         \tElevator: %.4f\n\
         \tThrottle: %.4f\n\
         \tAileron: %.4f\n\
-        \tRudder: %.4f\n",...
-        delta(1), delta(2), delta(3), delta(4));
+        \tRudder: %.4f\n\
+        \ttv1: %.4f\n\
+        \ttv2: %.4f\n",...
+        delta(1), delta(2), delta(3), delta(4), delta(5), delta(6));
 
-gamma1 = atan(-trim_state(6)/trim_state(4)) ;
+gamma1 = atan(-trim_state(6)/trim_state(4));
 gamma_true = mav.true_state.gamma;
-fprintf("Gamma calculated from trim - steady flight should be 0\n\tGamma: %.4f\n", gamma_true);
+fprintf("Gamma calculated from trim - steady flight should be 0\n\tGamma: %.4f\n", gamma1);
 % compute linearized models
 [A_lon, B_lon, A_lat, B_lat] = compute_ss_model(mav, trim_state, trim_input, MAV);
 
@@ -91,9 +93,10 @@ fprintf("Gamma calculated from trim - steady flight should be 0\n\tGamma: %.4f\n
 % omega_n_2 = sqrt(sigma_2^2 + omega_2^2)
 % zeta_1 = -sigma_2 / omega_n_2
 % initialize the simulation time
-sim_time = SIM.start_time;
 
-lambda = eig(A_lat)
+%TODO delta_tv should be normalized between 0 to 1
+sim_time = SIM.start_time;
+lambda = eig(A_lat);
 % main simulation loop
 disp('Type CTRL-C to exit');
 while sim_time < SIM.end_time
@@ -104,15 +107,19 @@ while sim_time < SIM.end_time
     % fprintf("Chap 5 delta\n")
     % delta
     
-    % if abs(sim_time - 0.6) < 1e-6
-    %     fprintf("phougoid impulese")
-    %     delta(1) = 0.5 ;
-    % elseif abs(sim_time - (0.6+0.12)) < 1e-6
-    % delta(1) = 0 ;
+    if abs(sim_time-1.40) < 1e-6
+        fprintf("Start Vector Thrust")
+        delta(5) = -10;
+    elseif abs(sim_time-2.00) < 1e-6
+        delta(5) = -20;
+    elseif abs(sim_time-3.00) < 1e-6
+        delta(5) = -30 ;
+    end
     
     % elseif abs(sim_time - (0.6+SIM.ts_simulation)) < 1e-6
     % delta(3) = -0.2;
     % end
+    
     mav.update_state(delta, current_wind, MAV);
     mav.true_state;
     %-------update viewer-------------

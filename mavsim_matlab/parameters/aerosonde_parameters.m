@@ -53,6 +53,7 @@ MAV.k_Omega       = 0;
 MAV.e             = 0.9;
 MAV.AR            = MAV.b^2/MAV.S_wing;
 
+
 MAV.C_L_0         = 0.23;
 MAV.C_L_alpha     = 5.61;
 MAV.C_L_q         = 7.95;
@@ -99,13 +100,19 @@ MAV.alpha0        = 0.47;
 % Parameters for propulsion thrust and torque models
 
 % Prop parameters
-MAV.D_prop = 20*(0.0254);     % prop diameter in m
-
+MAV.D_prop = 20*(0.0254);                   % prop diameter in m
+MAV.m_prop        = 3.39;                    %oz from website
+MAV.I_p = (1/3)*MAV.m_prop/2*(MAV.D_prop/2)^2; %(using I_blade approximating the blade as a rod, single prop)
 % Motor parameters
 MAV.K_V = 145;                    % from datasheet RPM/V
 MAV.K_Q = (1/MAV.K_V)*60/(2*pi);   % KQ in N-m/A, V-s/rad
 MAV.R_motor = 0.042;              % ohms
+MAV.m_motor = 0.995;                 % kg from AXI 5345/20 HD GOLD LINE V3 page motor mass
 MAV.i0 = 1.5;                     % no-load (zero-torque) current (A)
+D_motor = 0.063; %motor diameter meter
+MAV.I_m = 1/2*MAV.m_motor*(D_motor/2) %approximate asa disk https://engineering.stackexchange.com/questions/49367/how-to-calculate-the-moment-of-inertia-of-a-propeller
+
+MAV.I_s = MAV.I_m+2*MAV.I_p;
 
 % Inputs
 MAV.ncells = 12;
