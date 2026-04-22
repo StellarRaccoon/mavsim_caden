@@ -5,7 +5,7 @@
 %         2/5/2019 - RWB
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 run('../parameters/simulation_parameters')  % load SIM: simulation parameters
-run('../parameters/aerosonde_parameters');  % load MAV: aircraft parameters
+run('../parameters/aerosonde_parameters')  % load MAV: aircraft parameters
 run('../parameters/wind_parameters')  % load WIND
 
 % initialize the mav viewer
@@ -22,14 +22,17 @@ end
 addpath('../chap4'); 
 addpath('../chap4'); wind = wind_simulation(SIM.ts_simulation, WIND);
 mav = mav_dynamics(SIM.ts_simulation, MAV, WIND);
-
 % compute trim
 addpath('../chap5');
 Va = MAV.Va0;
 gamma = 0*pi/180;
-[trim_state, trim_input] = compute_trim(mav, Va, gamma, MAV);
+% [trim_state, trim_input] = compute_trim(mav, Va, gamma, MAV);
+qt =Euler2Quaternion(0,0.1591,0)
+trim_state = [0;0;-10;16.7854; -0.0000; 2.6927; qt; -0.0000; -0.0000; 0.0000];
+trim_input = [-0.4266; 0.4902; 0.0037; -0.0006;0;0];
 mav.state = trim_state;
 delta = trim_input;
+
 
 mav.update_velocity_data(zeros(6,1));   % no wind
 fm   = mav.forces_moments(delta, MAV);
@@ -104,30 +107,16 @@ while sim_time < SIM.end_time
     %-------physical system-------------
     % current_wind = wind.update();
     current_wind = zeros(6,1);
-    % fprintf("Chap 5 delta\n")
-    % delta
-    
-    if abs(sim_time-1.40) < 1e-6
-        fprintf("Start Vector Thrust")
-        delta(5) = -10;
-    elseif abs(sim_time-2.00) < 1e-6
-        delta(5) = -20;
-    elseif abs(sim_time-3.00) < 1e-6
-        delta(5) = -30 ;
-    end
-    
-    % elseif abs(sim_time - (0.6+SIM.ts_simulation)) < 1e-6
-    % delta(3) = -0.2;
-    % end
+
     
     mav.update_state(delta, current_wind, MAV);
     mav.true_state;
     %-------update viewer-------------
     mav_view.update(mav.true_state);  % plot body of MAV
     data_view.update(mav.true_state,...  % true states
-                     mav.true_state,...  % estimated states
-                     mav.true_state,...  % commmanded states
-                     SIM.ts_simulation); 
+                    mav.true_state,...  % estimated states
+                    mav.true_state,...  % commmanded states
+                    SIM.ts_simulation); 
     if VIDEO==1
         video.update(sim_time);  
     end
