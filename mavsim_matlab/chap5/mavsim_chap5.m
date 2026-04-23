@@ -37,7 +37,7 @@ xdot = mav.derivatives(trim_state, fm, MAV)
 
 xdot_target = [0; 0; -Va*sin(0); 0; 0; 0; 0; 0; 0; 0; 0; 0; 0];
 err = xdot - xdot_target
-temp1=Quaternion2Euler([trim_state(7);trim_state(8);trim_state(9);trim_state(10)])
+temp1=Quaternion2Euler([trim_state(7);trim_state(8);trim_state(9);trim_state(10)]);
 
 fprintf("computed trim values\n")
 fprintf("TRIM STATE - Straight and level should have no:\n Side speed(v), roll angle (phi), yaw angle(psi), angular momentum (p,q,r)\n\
@@ -93,7 +93,7 @@ fprintf("Gamma calculated from trim - steady flight should be 0\n\tGamma: %.4f\n
 % initialize the simulation time
 sim_time = SIM.start_time;
 
-lambda = eig(A_lat)
+lambda = eig(A_lat);
     d_trim = delta(1)
 % main simulation loop
 disp('Type CTRL-C to exit');

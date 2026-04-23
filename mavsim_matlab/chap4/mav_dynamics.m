@@ -192,6 +192,10 @@ classdef mav_dynamics < handle
             [F_prop, Q_prop] = prop_force_and_torque(self.Va, delta_t,MAV);
             % below is a simpliefied propeller force 
             % F_prop = 0.5*MAV.rho*MAV.S_prop*MAV.C_prop*((MAV.k_motor*delta_t)^2-self.Va^2);
+            fprintf("DB F_prop\n");
+            disp(F_prop);
+            fprintf("DB Q_prop\n");
+            disp(Q_prop);
 
             %% AERODYNAMIC FORCES [fx; fy; fz] eq 4.24
             % effect of lift and drag on aircraft
@@ -212,20 +216,30 @@ classdef mav_dynamics < handle
                                     2*(e2*e3 + e1*e0);
                                     e3^2+e0^2-e1^2-e2^2
                                     ];
+            
             e = Quaternion2Euler(self.state(7:10));
             phi=e(1); theta=e(2); psi=e(3);
                 % find aerodynamic force due to Lift and pitch rate
             c = MAV.c/(2*self.Va);
             b = MAV.b/(2*self.Va);
 
-            Fa = 0.5*MAV.rho*self.Va^2*MAV.S_wing * [
+            F_a = 0.5*MAV.rho*self.Va^2*MAV.S_wing * [
                 C_X + C_X_q*c*q + C_X_delta_e*delta_e;
                 MAV.C_Y_0 + MAV.C_Y_beta*self.beta + MAV.C_Y_p*b*p + MAV.C_Y_r*b*r + MAV.C_Y_delta_a*delta_a + MAV.C_Y_delta_r*delta_r;
                 C_Z + C_Z_q*c*q + C_Z_delta_e*delta_e
             ];
+            
                 
                 % sum forces together as in eq 4.24
-                Force = F_g+Fa+[F_prop;0;0];
+                Force = F_g+F_a+[F_prop;0;0];
+                fprintf("DB F_G\n")
+                disp(F_g);
+                fprintf("DB F_a\n")
+                disp(F_a);
+                fprintf("DB F_prop\n")
+                disp(F_prop);
+                fprintf("DB Force\n")
+                disp(Force);
             %% AERODYNAMIC MOMENTS
                     p = self.state(11); % p
                     q = self.state(12); % q
@@ -243,9 +257,17 @@ classdef mav_dynamics < handle
                         MAV.b*(MAV.C_n_delta_a*delta_a+MAV.C_n_delta_r*delta_r)
                     ];
                     
-                    
+                
                 % sum forces together as in eq 4.24
                 Torque = 1/2*MAV.rho*self.Va^2*MAV.S_wing*M_aero+1/2*MAV.rho*self.Va^2*MAV.S_wing*M_cs+[-Q_prop;0;0];
+                fprintf("DB M_aero\n")
+                disp(M_aero);
+                fprintf("DB M_cs\n")
+                disp(M_cs);
+                fprintf("DB Q_prop\n")
+                disp(Q_prop);
+                fprintf("DB Torque\n")
+                disp(Torque);
             % output total force and torque
             out = [Force; Torque];
         end
