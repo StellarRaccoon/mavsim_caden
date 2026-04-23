@@ -13,8 +13,8 @@ MAV.Jxz  = 0.120;
 % initial conditions
 MAV.pn0    = 0;     % initial North position
 MAV.pe0    = 0;     % initial East position
-MAV.pd0    = -100;  % initial Down position (negative altitude)
-MAV.u0     = 0;%17;     % initial velocity along body x-axis
+MAV.pd0    = -10;  % initial Down position (negative altitude)
+MAV.u0     = 17;%17;     % initial velocity along body x-axis
 MAV.v0     = 0;     % initial velocity along body y-axis
 MAV.w0     = 0;     % initial velocity along body z-axis
 MAV.phi0   = 0;     % initial roll angle
@@ -28,7 +28,7 @@ MAV.e3     = e(4);
 MAV.p0     = 0;     % initial body frame roll rate
 MAV.q0     = 0;     % initial body frame pitch rate
 MAV.r0     = 0;     % initial body frame yaw rate
-
+MAV.Va0 = sqrt(MAV.u0^2+MAV.v0^2+MAV.w0^2);
 % Gamma parameters from uavbook page 36
 MAV.Gamma  = MAV.Jx*MAV.Jz-MAV.Jxz^2;
 MAV.Gamma1 = (MAV.Jxz*(MAV.Jx-MAV.Jy+MAV.Jz))/MAV.Gamma;
@@ -62,16 +62,14 @@ MAV.C_D_alpha     = 0.030;
 MAV.C_D_p         = 0.0;
 MAV.C_D_q         = 0.0;
 MAV.C_D_delta_e   = 0.0135;
-MAV.C_m_0         = 0.0135;
-MAV.C_m_alpha     = -2.74;
-MAV.C_m_q         = -38.21;
-MAV.C_m_delta_e   = -0.99;
+
 MAV.C_Y_0         = 0.0;
 MAV.C_Y_beta      = -0.83;
 MAV.C_Y_p         = 0.0;
 MAV.C_Y_r         = 0.0;
 MAV.C_Y_delta_a   = 0.075;
 MAV.C_Y_delta_r   = 0.19;
+% in book CMx = C_ell
 MAV.C_ell_0       = 0.0;
 MAV.C_ell_beta    = -0.13;
 MAV.C_ell_p       = -0.51;
@@ -79,6 +77,12 @@ MAV.C_ell_p       = -0.51;
 MAV.C_ell_r       = 0.045;
 MAV.C_ell_delta_a = 0.17;
 MAV.C_ell_delta_r = 0.0024;
+%CMy = C_m
+MAV.C_m_0         = 0.0135;
+MAV.C_m_alpha     = -2.74;
+MAV.C_m_q         = -38.21;
+MAV.C_m_delta_e   = -0.99;
+% in book CMz = C_n
 MAV.C_n_0         = 0.0;
 MAV.C_n_beta      = 0.073;
 MAV.C_n_p         = -0.069;
@@ -99,7 +103,7 @@ MAV.D_prop = 20*(0.0254);     % prop diameter in m
 
 % Motor parameters
 MAV.K_V = 145;                    % from datasheet RPM/V
-MAV.KQ = (1/MAV.K_V)*60/(2*pi);   % KQ in N-m/A, V-s/rad
+MAV.K_Q = (1/MAV.K_V)*60/(2*pi);   % KQ in N-m/A, V-s/rad
 MAV.R_motor = 0.042;              % ohms
 MAV.i0 = 1.5;                     % no-load (zero-torque) current (A)
 
@@ -116,5 +120,16 @@ MAV.C_T2 = -0.1079;
 MAV.C_T1 = -0.06044;
 MAV.C_T0 = 0.09357;
 
-
-
+% From page 69
+MAV.C_p_0           = MAV.Gamma3 * MAV.C_ell_0          + MAV.Gamma4 * MAV.C_n_0;
+MAV.C_p_beta        = MAV.Gamma3 * MAV.C_ell_beta       + MAV.Gamma4 * MAV.C_n_beta;
+MAV.C_p_p           = MAV.Gamma3 * MAV.C_ell_p          + MAV.Gamma4 * MAV.C_n_p;
+MAV.C_p_r           = MAV.Gamma3 * MAV.C_ell_r          + MAV.Gamma4 * MAV.C_n_r;
+MAV.C_p_delta_a     = MAV.Gamma3 * MAV.C_ell_delta_a    + MAV.Gamma4 * MAV.C_n_delta_a;
+MAV.C_p_delta_r     = MAV.Gamma3 * MAV.C_ell_delta_r    + MAV.Gamma4 * MAV.C_n_delta_r;
+MAV.C_r_0           = MAV.Gamma4 * MAV.C_ell_0          + MAV.Gamma8 * MAV.C_n_0;
+MAV.C_r_beta        = MAV.Gamma4 * MAV.C_ell_beta       + MAV.Gamma8 * MAV.C_n_beta;
+MAV.C_r_p           = MAV.Gamma4 * MAV.C_ell_p          + MAV.Gamma8 * MAV.C_n_p;
+MAV.C_r_r           = MAV.Gamma4 * MAV.C_ell_r          + MAV.Gamma8 * MAV.C_n_r;
+MAV.C_r_delta_a     = MAV.Gamma4 * MAV.C_ell_delta_a    + MAV.Gamma8 * MAV.C_n_delta_a;
+MAV.C_r_delta_r     = MAV.Gamma4 * MAV.C_ell_delta_r    + MAV.Gamma8 * MAV.C_n_delta_r;

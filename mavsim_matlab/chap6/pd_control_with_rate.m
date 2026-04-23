@@ -21,6 +21,12 @@ classdef pd_control_with_rate < handle
         end
         %----------------------------
         function u_sat = update(self, y_ref, y, ydot)
+            % compute the error
+            error = y_ref- y;
+            % PD control
+            u = self.kp * error  - self.kd * ydot;
+            % saturate PD control at limit
+            u_sat = self.saturate(u);
         end
         %----------------------------
         function out = saturate(self, in)

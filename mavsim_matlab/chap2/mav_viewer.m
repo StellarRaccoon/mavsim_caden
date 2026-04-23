@@ -30,7 +30,10 @@ classdef mav_viewer < handle
                 zlabel('-Down')
                 view(32,47)  % set the vieew angle for figure
                 % axis([-10,10,-10,10,-10,10]);
-                axis([-30,30,0,200,70,120]);
+                axis([-50,10,...
+                0,150,... %north
+                0,80
+                ]);
                 axis equal;
                 hold on
                 grid on
@@ -43,8 +46,10 @@ classdef mav_viewer < handle
         end
         %---------------------------
         function self = drawBody(self, pn, pe, pd, phi, theta, psi)
-            Vertices = self.rotate(self.Vertices, phi, theta, psi);   % rotate rigid body  
-            Vertices = self.translate(Vertices, pn, pe, pd);     % translate after rotation
+            % rotate rigid body  
+            Vertices = self.rotate(self.Vertices, phi, theta, psi);
+            % translate after rotation   
+            Vertices = self.translate(Vertices, pn, pe, pd);
             % transform vertices from NED to ENU (for matlab rendering)
             R = [...
                 0, 1, 0;...
@@ -76,8 +81,10 @@ classdef mav_viewer < handle
                         cos(psi), sin(psi), 0;
                         -sin(psi), cos(psi), 0;
                         0, 0, 1];
-            R = R_roll*R_pitch*R_yaw;   % inertial to body
-            R = R';  % body to inertial
+            % inertial to body
+            R = R_roll*R_pitch*R_yaw;   
+            % body to inertial
+            R = R';  
             % rotate vertices
             pts = R*pts;
         end
@@ -98,7 +105,7 @@ classdef mav_viewer < handle
             tail_h = 3;
             tailwing_l = 2;
             tailwing_w = 3;
-            % Define the vertices (physical location of vertices)
+            % verticie array
             V = [
                 fuse_l1, 0, 0;                              % point 1
                 fuse_l2, fuse_w/2, -fuse_h/2;               % point 2
@@ -108,7 +115,7 @@ classdef mav_viewer < handle
                 -fuse_l3, 0, 0;                             % point 6
                 0, wing_w/2, 0;                             % point 7
                 -wing_l, wing_w/2, 0;                       % point 8
-                -wing_l, -wing_w/2, 0;                      % point
+                -wing_l, -wing_w/2, 0;                      % point 9
                 0, -wing_w/2, 0;                            % point 10
                 -fuse_l3+tailwing_l, tailwing_w/2, 0;       % point 11
                 -fuse_l3, tailwing_w/2, 0;                  % point 12
@@ -118,7 +125,7 @@ classdef mav_viewer < handle
                 -fuse_l3, 0, -tail_h;                       % point 16
             ]';
 
-            % define faces as a list of vertices numbered above
+            % Connect the verticies in order
             F = [...
                     1, 2, 3;        % top nose
                     1, 3, 4;        % port nose
